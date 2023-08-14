@@ -3,10 +3,14 @@ import numpy as np
 
 class Series:
     # x: x values, y_mean: y values, y_std_err: standard error in the mean for each y value
-    def __init__(self, x, y_mean, y_std_err):
+    def __init__(self, x, y_mean, y_std, sample_size):
         self.x = x
         self.y_mean = y_mean
-        self.y_std_err = y_std_err
+        self.y_std = y_std
+        self.sample_size = sample_size
+    @property
+    def y_std_err(self):
+        return self.y_std/np.sqrt(self.sample_size)
 
 class Metric:
     def __init__(self, name, process_function, gt_image_set, diff_offset=0, x_axis_name='', y_axis_name='', x_scale='linear', y_scale='linear'):
@@ -54,13 +58,13 @@ class Metric:
     
     def diff_function(self, data_series):
         diff_y_mean = data_series.y_mean/self.gt_series.y_mean - 1
-        n = len(diff_y_mean)
-        diff_y_std_err = np.sqrt(np.abs(
-            (data_series.y_std_err**2 + (data_series.y_mean**2)/n)/(n*self.gt_series.y_std_err**2 + self.gt_series.y_mean**2)
-            - data_series.y_mean**2/(n*self.gt_series.y_mean**2)
-        ))
+        diff_y_std = np.sqrt(np.abs(
+            (data_series.y_std_err**2 + (data_series.y_mean**2)/data_series.sample_size)/(self.gt_series.sample_size*self.gt_series.y_std_err**2 + self.gt_series.y_mean**2)
+            - data_series.y_mean**2/(self.gt_series.sample_size*self.gt_series.y_mean**2)
+        ))*np.sqrt(data_series.sample_size)
         return Series(
             self.gt_series.x[self.diff_offset:],
             diff_y_mean[self.diff_offset:],
-            diff_y_std_err[self.diff_offset:]
+            diff_y_std[self.diff_offset:],
+            data_series.sample_size
         )

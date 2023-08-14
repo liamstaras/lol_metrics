@@ -39,9 +39,8 @@ def power_spectrum(image_set):
     spec_out = [np.abs(calc_ps(image)['power']) for image in image_set]
     mean = np.mean(spec_out, axis=0)
     std = np.std(spec_out, axis=0, ddof=1)
-    std_err = std/np.sqrt(len(spec_out)) # standard error
     k_out = np.abs(calc_ps(image_set[0])['k'])
-    return Series(k_out, mean, std_err)
+    return Series(k_out, mean, std, len(image_set[0]))
 
 ## create Metric objects for each function above
 ## this requires the ground truth image set to be specified, as this is used in the difference calculation

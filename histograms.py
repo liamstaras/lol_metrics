@@ -8,4 +8,4 @@ def make_mean_histogram(image_set, bins, data_range):
         histogram, bin_edges = np.histogram(image, bins=bins, range=data_range)
         output.append(histogram)
     mean_bin_edges = (bin_edges[1:] + bin_edges[:-1])/2
-    return Series(mean_bin_edges, np.mean(output, axis=0), np.std(output, axis=0, ddof=1)/np.sqrt(len(output)))
+    return Series(mean_bin_edges, np.mean(output, axis=0), np.std(output, axis=0, ddof=1), len(output[0]))
