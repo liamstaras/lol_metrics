@@ -63,11 +63,11 @@ for name in (name for name in list(data) if name != 'GT'): # must exclude GT we 
 
 ## create a nice table to show metric scores
 metric_names = [metric.name for metric in metrics]
-header_row = ['name'] + metric_names + ['total']
+header_row = ['name'] + metric_names + ['quadrature sum']
 data_rows = [
     [name] # first column is name
     + [metric_scores[name][metric_name] for metric_name in metric_names] # this is a list of all metric values
-    + [sum([metric_scores[name][metric_name] for metric_name in metric_names])] # sum the above list to get the total score
+    + [np.sqrt(sum([metric_scores[name][metric_name]**2 for metric_name in metric_names]))] # sum the above list to get the total score
     for name in list(data) if name != 'GT' # again, calculating the metric for the ground truth is useless
 ]
 
