@@ -7,7 +7,7 @@ from tabulate import tabulate
 
 from histograms import *
 from data import *
-from support import *
+import support
 from routines import *
 
 ### data loading
@@ -24,8 +24,9 @@ data, data_log = load_data(directory='output', in_is_log=True)
 def pixel_counts(image_set):
     return make_mean_histogram(
         image_set = image_set,
-        bins = (np.logspace(0, 0.7)-2),
-        data_range = (-1,3)
+        #bins = (np.logspace(0, 0.7)-2),
+        bins = 100,
+        data_range = (-2,2)
     )
 
 def peak_counts(image_set):
@@ -40,26 +41,30 @@ def power_spectrum(image_set):
     mean = np.mean(spec_out, axis=0)
     std = np.std(spec_out, axis=0, ddof=1)
     k_out = np.abs(calc_ps(image_set[0])['k'])
-    return Series(k_out, mean, std, len(image_set[0]))
+    return support.Series(k_out, mean, std, len(image_set[0]))
 
 ## create Metric objects for each function above
 ## this requires the ground truth image set to be specified, as this is used in the difference calculation
 ## the diff_offset parameter is to remove any NaNs that occur at the start of the diff calculation
 
 metrics = [
-    Metric('pixel counts', pixel_counts, data['GT'], diff_offset=10, x_axis_name='pixel value', y_axis_name='density'),
-    Metric('peak counts', peak_counts, data['GT'], diff_offset=5, x_axis_name='peak value', y_axis_name='density'),
-    Metric('power spectrum', power_spectrum, data['GT'], diff_offset=0, x_axis_name='k', y_axis_name='power spectrum', x_scale='log', y_scale='log')
+    support.Metric('peak counts', peak_counts, data['GT'], diff_offset=5, x_axis_name='peak value', y_axis_name='density', x_scale='linear', y_scale='log'),
+    support.Metric('power spectrum', power_spectrum, data['GT'], diff_offset=0, x_axis_name='k', y_axis_name='power spectrum', x_scale='log', y_scale='log'),
+    support.Metric('pixel counts', pixel_counts, data_log['GT'], data_flags=('log',), diff_offset=10, x_axis_name='ln(1+pixel value)', y_axis_name='density', x_scale='linear', y_scale='log')
 ]
 
 # create an empty OrderedDict to store the output metric scores
 metric_scores = OrderedDict()
 
-for name in (name for name in list(data) if name != 'GT'): # must exclude GT we don't want to compare it to itself!
+for name in (name for name in list(data) if name != 'GT'): # must exclude GT - we don't want to compare it to itself!
     metric_scores[name] = OrderedDict()
     for metric in metrics:
         # add_image_set does three things: calculates and plots i. the series histogram ii. the relative difference, and iii. returns the metric score alla Davide's 'test_single_epoch'
-        metric_scores[name][metric.name] = metric.add_image_set(data[name], name)
+        if 'log' in metric.data_flags:
+            data_to_add = data_log[name]
+        else:
+            data_to_add = data[name]
+        metric_scores[name][metric.name] = metric.add_image_set(data_to_add, name)
 
 ## create a nice table to show metric scores
 metric_names = [metric.name for metric in metrics]

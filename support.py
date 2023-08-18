@@ -13,10 +13,11 @@ class Series:
         return self.y_std/np.sqrt(self.sample_size)
 
 class Metric:
-    def __init__(self, name, process_function, gt_image_set, diff_offset=0, x_axis_name='', y_axis_name='', x_scale='linear', y_scale='linear'):
+    def __init__(self, name, process_function, gt_image_set, data_flags=(), diff_offset=0, x_axis_name='', y_axis_name='', x_scale='linear', y_scale='linear'):
         ## initalize basic attributes
         self.process_function = process_function
         self.diff_offset = diff_offset
+        self.data_flags = data_flags
         self.name = name
         fig, self.axes = plt.subplots(2, sharex=True)
         fig.suptitle(name) # set title for figure
