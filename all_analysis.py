@@ -4,17 +4,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from tabulate import tabulate
+import cmocean
 
 from histograms import *
 from data import *
 import support
 from routines import *
+import image
 
 ### data loading
 
-data, data_log = load_data(directory='output', in_is_log=True)
+#data, data_log = load_data(directory='output', in_is_log=True)
 # alternative to select only certain image sets:
-#data, data_log = load_data(directory='output', in_is_log=True, select_names=('GT','Cond','Out_e'))
+data, data_log = load_data(directory='output', in_is_log=True, select_names=('GT','Cond','Out_b', 'Out_e'))
 
 
 ### display the output data
@@ -75,6 +77,8 @@ data_rows = [
     + [np.sqrt(sum([metric_scores[name][metric_name]**2 for metric_name in metric_names]))] # sum the above list to get the total score
     for name in list(data) if name != 'GT' # again, calculating the metric for the ground truth is useless
 ]
+
+image_comparison = image.ImageComparison(data_log, cmap=cmocean.cm.deep_r)
 
 print(tabulate(data_rows, headers=header_row)) # use the tabulate package for easy table creation
 
