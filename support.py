@@ -34,6 +34,10 @@ class Metric:
         self.axes[1].set_xscale(x_scale)
         self.axes[1].set_yscale('linear') # relative difference always has linear scale
 
+        # axes grid
+        self.axes[0].grid()
+        self.axes[1].grid()
+
         # create empty placeholder for legend object
         self.legend = None
 
@@ -59,10 +63,11 @@ class Metric:
     
     def diff_function(self, data_series):
         diff_y_mean = data_series.y_mean/self.gt_series.y_mean - 1
-        diff_y_std = np.sqrt(np.abs(
+        '''diff_y_std = np.sqrt(np.abs(
             (data_series.y_std_err**2 + (data_series.y_mean**2)/data_series.sample_size)/(self.gt_series.sample_size*self.gt_series.y_std_err**2 + self.gt_series.y_mean**2)
             - data_series.y_mean**2/(self.gt_series.sample_size*self.gt_series.y_mean**2)
-        ))*np.sqrt(data_series.sample_size)
+        ))*np.sqrt(data_series.sample_size)'''
+        diff_y_std = (data_series.y_mean/self.gt_series.y_mean)*np.sqrt((data_series.y_std/data_series.y_mean)**2 + (self.gt_series.y_std/self.gt_series.y_mean)**2)
         return Series(
             self.gt_series.x[self.diff_offset:],
             diff_y_mean[self.diff_offset:],
