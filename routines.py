@@ -1,16 +1,4 @@
-from nbodykit.lab import FFTPower, ArrayMesh
-
-## Davide's routine to calculate a power spectrum using NBK
-
-kmin = 1e-5 # in h/Mpc
-kmax = 0.3 # in h/Mpc # apparently higher values fail
-
-def calc_ps(field, BoxSize=[1000, 1000], kmin=kmin, kmax=kmax, dk=1e-2):
-    field_mesh = ArrayMesh(field, BoxSize=BoxSize)
-    r_2d = FFTPower(field_mesh, mode='1d', kmin=kmin, kmax=kmax)#, dk=1e-4)
-    return r_2d.power
-
-## Liam's adapted routine to find peaks
+import numpy as np
 
 def get_peaks(image):
     peak_values = []
@@ -29,3 +17,19 @@ def get_peaks(image):
             if peak:
                 peak_values.append(image[x,y])
     return peak_values
+
+try:
+    from nbodykit.lab import FFTPower, ArrayMesh
+    def calc_ps(field, box_size=(1000, 1000), kmin=1e-5, kmax=0.3, dk=None):
+        field_mesh = ArrayMesh(field, BoxSize=box_size)
+        r_2d = FFTPower(field_mesh, mode='1d', kmin=kmin, kmax=kmax, dk=dk)
+        return {'power': np.real(r_2d.power['power']), 'k': np.real(r_2d.power['k'])}
+except ImportError:
+    try:
+        import powerbox as pb
+        def calc_ps(field, box_size=(1000, 1000), kmin=1e-5, kmax=0.3, dk=1e-2):
+            spec, k = pb.get_power(field, box_size, bins=np.arange(kmin,kmax,dk))
+            return {'power': spec, 'k': k}
+    except ImportError:
+        raise ImportError('Must have either NBodyKit or PowerBox installed!')
+    

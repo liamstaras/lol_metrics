@@ -6,53 +6,23 @@ from collections import OrderedDict
 from tabulate import tabulate
 import cmocean
 
-from histograms import *
-from data import *
 import support
-from routines import *
 import image
+import cosmo_metrics
 
 ### data loading
 
 #data, data_log = load_data(directory='output', in_is_log=True)
 # alternative to select only certain image sets:
-data, data_log = load_data(directory='output', in_is_log=True, select_names=('GT','Cond','Out_b', 'Out_e'))
+data, data_log = support.load_data(directory='output', in_is_log=True, select_names=('GT','Cond','Out_b', 'Out_e'))
 
 
 ### display the output data
 
-## functions to form data series from image sets
-
-def pixel_counts(image_set):
-    return make_mean_histogram(
-        image_set = image_set,
-        #bins = (np.logspace(0, 0.7)-2),
-        bins = 100,
-        data_range = (-2,2)
-    )
-
-def peak_counts(image_set):
-    return make_mean_histogram(
-        image_set = (get_peaks(image) for image in image_set),
-        bins = 100,
-        data_range = (-0.5,3.5)
-    )
-
-def power_spectrum(image_set):
-    spec_out = [np.abs(calc_ps(image)['power']) for image in image_set]
-    mean = np.mean(spec_out, axis=0)
-    std = np.std(spec_out, axis=0, ddof=1)
-    k_out = np.abs(calc_ps(image_set[0])['k'])
-    return support.Series(k_out, mean, std, len(image_set[0]))
-
-## create Metric objects for each function above
-## this requires the ground truth image set to be specified, as this is used in the difference calculation
-## the diff_offset parameter is to remove any NaNs that occur at the start of the diff calculation
-
 metrics = [
-    support.Metric('peak counts', peak_counts, data['GT'], diff_offset=5, x_axis_name='peak value', y_axis_name='density', x_scale='linear', y_scale='log'),
-    support.Metric('power spectrum', power_spectrum, data['GT'], diff_offset=0, x_axis_name='k', y_axis_name='power spectrum', x_scale='log', y_scale='log'),
-    support.Metric('pixel counts', pixel_counts, data_log['GT'], data_flags=('log',), diff_offset=10, x_axis_name='ln(1+pixel value)', y_axis_name='density', x_scale='linear', y_scale='log')
+    cosmo_metrics.PeakCounts(data['GT']),
+    cosmo_metrics.PixelCounts(data['GT']),
+    cosmo_metrics.PowerSpectrum(data['GT'])
 ]
 
 # create an empty OrderedDict to store the output metric scores
@@ -62,11 +32,7 @@ for name in (name for name in list(data) if name != 'GT'): # must exclude GT - w
     metric_scores[name] = OrderedDict()
     for metric in metrics:
         # add_image_set does three things: calculates and plots i. the series histogram ii. the relative difference, and iii. returns the metric score alla Davide's 'test_single_epoch'
-        if 'log' in metric.data_flags:
-            data_to_add = data_log[name]
-        else:
-            data_to_add = data[name]
-        metric_scores[name][metric.name] = metric.add_image_set(data_to_add, name)
+        metric_scores[name][metric.name] = metric.add_image_set(data[name], name)
 
 ## create a nice table to show metric scores
 metric_names = [metric.name for metric in metrics]

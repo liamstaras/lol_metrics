@@ -1,9 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, Button
-from matplotlib.image import AxesImage
+from matplotlib.widgets import Slider
 from collections import OrderedDict
-from data import *
 
 
 class ImageComparison:
